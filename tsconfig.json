@@ -6,12 +6,11 @@
         "module": "NodeNext",
         "target": "ES2022",
         "strict": true,
-        "skipLibCheck": true,
-        "allowImportingTsExtensions": true,
+        "skipLibCheck": true,        
         "noUncheckedIndexedAccess": true,
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": true,
-        "erasableSyntaxOnly": true
+        "forceConsistentCasingInFileNames": true,        
+        "erasableSyntaxOnly": true,
+        "outDir": "dist"
     },
     "include": ["src"]
 }

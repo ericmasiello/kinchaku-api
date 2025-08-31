@@ -3,7 +3,7 @@ import * as core from "express-serve-static-core";
 import { z } from 'zod';
 import db from '../db.js';
 import { requireAuth } from '../auth.js';
-import { RequestWithData } from '../types.ts';
+import { RequestWithData } from '../types.js';
 
 const router = Router();
 
