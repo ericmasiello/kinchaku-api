@@ -9,15 +9,12 @@
     "node": ">=20"
   },
   "scripts": {
-    "make:data:dir": "node ./scripts/ensure-data-dir.js",
-    "predev": "npm run make:data:dir",
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "prestart": "npm run make:data:dir",
-    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json",    
+    "start": "node src/index.ts",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.14",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^4.19.2",
@@ -33,8 +30,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^24.3.0",
-    "eslint": "^9.9.0",
-    "tsx": "^4.19.2",
+    "eslint": "^9.9.0",    
     "typescript": "^5.5.4"
   }
 }

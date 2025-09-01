@@ -9,8 +9,9 @@ services:
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - DATABASE_PATH=/data/db.sqlite
       - NODE_ENV=production
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
     volumes:
       - ./data:/data
     restart: unless-stopped

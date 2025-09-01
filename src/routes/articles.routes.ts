@@ -1,9 +1,8 @@
-import { Router, type Request, } from 'express';
-import * as core from "express-serve-static-core";
+import { Router } from 'express';
 import { z } from 'zod';
-import db from '../db.js';
-import { requireAuth } from '../auth.js';
-import { RequestWithData } from '../types.js';
+import db from '../db.ts';
+import { requireAuth } from '../auth.ts';
+import { type RequestWithData } from '../types.ts';
 
 const router = Router();
 
@@ -23,7 +22,7 @@ router.use(requireAuth);
 
 
 // List with optional filters
-router.get('/', (req: RequestWithData, res) => {
+router.get('/', async (req: RequestWithData, res) => {
   const userId = req.userId!;
   const { archived, favorited } = req.query;
 
@@ -39,51 +38,57 @@ router.get('/', (req: RequestWithData, res) => {
     params.push(String(favorited) === 'true' ? 1 : 0);
   }
 
-  const rows = db.prepare(
-    `SELECT id, url, archived, favorited, date_added, updated_at
+  // @ts-ignore -- FIXME
+  const results = await db.execute({
+    sql: `SELECT id, url, archived, favorited, date_added, updated_at
      FROM articles
      WHERE ${clauses.join(' AND ')}
-     ORDER BY date_added DESC`
-     // @ts-ignore -- FIXME
-  ).all(...params);
+     ORDER BY date_added DESC`,
+    args: params
+  });
 
-  res.json({ items: rows });
+  const rows = results.rows;
+
+  res.json({ items: rows  });
 });
 
 // Create
-router.post('/', (req: RequestWithData, res) => {
+router.post('/', async (req: RequestWithData, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   const { url, archived, favorited } = parsed.data;
   const userId = req.userId!;
 
-  const info = db.prepare(
-    `INSERT INTO articles (user_id, url, archived, favorited)
-     VALUES (?, ?, ?, ?)`
-  ).run(userId, url, archived ? 1 : 0, favorited ? 1 : 0);
+  const info = await db.execute({
+    sql: `INSERT INTO articles (user_id, url, archived, favorited)
+     VALUES (?, ?, ?, ?)`,
+    args: [userId, url, archived ? 1 : 0, favorited ? 1 : 0]
+  });
 
-  const row = db.prepare(
-    `SELECT id, url, archived, favorited, date_added, updated_at
-     FROM articles WHERE id = ? AND user_id = ?`
-  ).get(info.lastInsertRowid, userId);
+  const results = await db.execute({
+    sql: `SELECT id, url, archived, favorited, date_added, updated_at
+     FROM articles WHERE id = ? AND user_id = ?`,
+    args: [info.lastInsertRowid!, userId]
+  });
 
-  res.status(201).json(row);
+  res.status(201).json(results.rows.at(0));
 });
 
 // Read one
-router.get('/:id', (req: RequestWithData<Record<"id", string>>, res) => {
-  const row = db.prepare(
-    `SELECT id, url, archived, favorited, date_added, updated_at
-     FROM articles WHERE id = ? AND user_id = ?`
-  ).get(req.params.id, req.userId!);
+router.get('/:id', async (req: RequestWithData<Record<"id", string>>, res) => {
+  const row = await db.execute({
+    sql: `SELECT id, url, archived, favorited, date_added, updated_at
+     FROM articles WHERE id = ? AND user_id = ?`,
+    args: [req.params.id, req.userId!]
+  });
 
   if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(row);
 });
 
 // Update (partial)
-router.patch('/:id', (req: RequestWithData<Record<"id", string>>, res) => {
+router.patch('/:id', async (req: RequestWithData<Record<"id", string>>, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const updates = parsed.data;
@@ -100,29 +105,32 @@ router.patch('/:id', (req: RequestWithData<Record<"id", string>>, res) => {
 
   params.push(req.params.id, req.userId!);
 
-  const info = db.prepare(
-    `UPDATE articles SET ${sets.join(', ')}, updated_at = datetime('now')
-     WHERE id = ? AND user_id = ?`
-     // @ts-ignore -- FIXME
-  ).run(...params);
+  // @ts-ignore -- FIXME
+  const info = await db.execute({
+    sql: `UPDATE articles SET ${sets.join(', ')}, updated_at = datetime('now')
+     WHERE id = ? AND user_id = ?`,
+    args: params
+  });
 
-  if (info.changes === 0) return res.status(404).json({ error: 'Not found' });
+  if (info.rowsAffected === 0) return res.status(404).json({ error: 'Not found' });
 
-  const row = db.prepare(
-    `SELECT id, url, archived, favorited, date_added, updated_at
-     FROM articles WHERE id = ? AND user_id = ?`
-  ).get(req.params.id, req.userId!);
+  const row = await db.execute({
+    sql: `SELECT id, url, archived, favorited, date_added, updated_at
+     FROM articles WHERE id = ? AND user_id = ?`,
+    args: [req.params.id, req.userId!]
+  });
 
   res.json(row);
 });
 
 // Delete
-router.delete('/:id', (req: RequestWithData<Record<"id", string>>, res) => {
-  const info = db.prepare(
-    `DELETE FROM articles WHERE id = ? AND user_id = ?`
-  ).run(req.params.id, req.userId!);
+router.delete('/:id', async (req: RequestWithData<Record<"id", string>>, res) => {
+  const info = await db.execute({
+    sql: `DELETE FROM articles WHERE id = ? AND user_id = ?`,
+    args: [req.params.id, req.userId!]
+  });
 
-  if (info.changes === 0) return res.status(404).json({ error: 'Not found' });
+  if (info.rowsAffected === 0) return res.status(404).json({ error: 'Not found' });
   res.status(204).send();
 });
 

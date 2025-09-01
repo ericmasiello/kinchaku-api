@@ -6,7 +6,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 COPY scripts ./scripts
-RUN npm run build && npm prune --production
+RUN npm run typecheck && npm prune --production
 
 # --- Runtime stage ---
 FROM node:24-bookworm-slim
@@ -15,9 +15,7 @@ ENV NODE_ENV=production
 # non-root user
 RUN useradd -m appuser
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-VOLUME ["/data"]
-ENV DATABASE_PATH=/data/db.sqlite
+COPY --from=build /app/src ./src
 EXPOSE 3000
 USER appuser
-CMD ["node", "dist/index.js"]
+CMD ["node", "src/index.ts"]

@@ -1,3 +1,5 @@
+# note substitute with http://192.168.4.49:3000 to run from synology
+
 # Signup
 curl -sX POST http://localhost:3000/api/auth/signup \
   -H "content-type: application/json" \

@@ -1,4 +1,4 @@
-import type * as core from "express-serve-static-core";
+import type * as core from "express-serve-static-core/index.d.ts";
 import type { Request } from 'express';
 
 export interface JwtPayload {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import db from '../db.js';
-import { hashPassword, signAccessToken, verifyPassword } from '../auth.js';
+import db from '../db.ts';
+import { hashPassword, signAccessToken, verifyPassword } from '../auth.ts';
 
 const router = Router();
 
@@ -16,13 +16,15 @@ router.post('/signup', async (req, res) => {
 
   const { email, password } = parsed.data;
   // Check if exists
-  const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (exists) return res.status(409).json({ error: 'Email already registered' });
+  const exists = await db.execute({ sql: 'SELECT id FROM users WHERE email = ?', args: [email] });
+
+  if (exists.rows.length) return res.status(409).json({ error: 'Email already registered' });
 
   const { salt, hash } = await hashPassword(password);
-  const info = db.prepare(
-    'INSERT INTO users (email, password_hash, salt) VALUES (?, ?, ?)'
-  ).run(email.toLowerCase(), hash, salt);
+  const info = await db.execute({
+    sql: 'INSERT INTO users (email, password_hash, salt) VALUES (?, ?, ?)',
+    args: [email.toLowerCase(), hash, salt]
+  });
 
   const token = signAccessToken({ sub: Number(info.lastInsertRowid), email: email.toLowerCase() });
   return res.status(201).json({ token });
@@ -40,8 +42,10 @@ router.post('/login', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   const { email, password } = parsed.data;
-  const unparsedUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
-  if (!unparsedUser) return res.status(401).json({ error: 'Invalid credentials' });
+  const results = await db.execute({ sql: 'SELECT * FROM users WHERE email = ?', args: [email.toLowerCase()] });
+  if (results.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const unparsedUser = results.rows.at(0);
 
   const user = UserResultSchema.parse(unparsedUser);
 

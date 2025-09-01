@@ -1,16 +1,17 @@
 {
-    "$schema": "https://json.schemastore.org/tsconfig",
-    "compilerOptions": {
-        "isolatedModules": true,
-        "jsx": "react-jsx",
-        "module": "NodeNext",
-        "target": "ES2022",
-        "strict": true,
-        "skipLibCheck": true,        
-        "noUncheckedIndexedAccess": true,
-        "forceConsistentCasingInFileNames": true,        
-        "erasableSyntaxOnly": true,
-        "outDir": "dist"
-    },
-    "include": ["src"]
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "module": "NodeNext",
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "erasableSyntaxOnly": true,
+    "noEmit": true
+  },
+  "include": ["src"]
 }

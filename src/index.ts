@@ -3,9 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { CORS_ORIGIN, NODE_ENV, PORT } from './config.js';
-import authRoutes from './routes/auth.routes.js';
-import articleRoutes from './routes/articles.routes.js';
+import { CORS_ORIGIN, NODE_ENV, PORT } from './config.ts';
+import authRoutes from './routes/auth.routes.ts';
+import articleRoutes from './routes/articles.routes.ts';
 
 // Express
 const app = express();

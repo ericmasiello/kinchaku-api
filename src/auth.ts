@@ -1,8 +1,8 @@
 import { randomBytes, scrypt as _scrypt, timingSafeEqual } from 'crypto';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from './config.js';
+import { JWT_SECRET } from './config.ts';
 import type { Request, Response, NextFunction } from 'express';
-import type { JwtPayload, RequestWithData } from './types.js';
+import type { JwtPayload, RequestWithData } from './types.ts';
 import { z } from 'zod';
 
 const scrypt = (password: string, salt: string) =>
