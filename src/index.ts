@@ -15,20 +15,22 @@ app.set('trust proxy', 1);
 
 // Security + essentials
 app.use(helmet());
-app.use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN, credentials: false }));
+app.use(
+  cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN, credentials: false })
+);
 app.use(express.json());
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Rate limit just auth endpoints
 const authLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 100 });
-app.use('/api/auth', authLimiter);
+app.use('/api/v1/auth', authLimiter);
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/articles', articleRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/articles', articleRoutes);
 
 // Health
-app.get('/healthz', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
