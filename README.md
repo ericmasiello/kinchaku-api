@@ -1,6 +1,7 @@
 # Common Commands
 
 > Substitute with http://192.168.4.49:3000/api/v1/<path> to run from Synology
+> https://kinchaku.synology.me/api/v1/<path>
 
 ## Signup
 
