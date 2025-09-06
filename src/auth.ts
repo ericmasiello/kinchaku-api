@@ -1,7 +1,11 @@
 import { randomBytes, scrypt as _scrypt, timingSafeEqual } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from './config.ts';
-import type { Request, Response, NextFunction } from 'express';
+
+// Refresh token config
+export const REFRESH_TOKEN_SECRET = JWT_SECRET + '_refresh';
+export const REFRESH_TOKEN_EXPIRY = '7d';
+import type { Response, NextFunction } from 'express';
 import type { JwtPayload, RequestWithData } from './types.ts';
 import { z } from 'zod';
 
@@ -24,8 +28,15 @@ export async function verifyPassword(password: string, salt: string, hash: strin
 }
 
 export function signAccessToken(payload: JwtPayload) {
-  // 24h is simple; you can add refresh tokens later if you like.
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+}
+
+export function signRefreshToken(payload: JwtPayload) {
+  return jwt.sign(payload, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+}
+
+export function verifyRefreshToken(token: string) {
+  return jwt.verify(token, REFRESH_TOKEN_SECRET);
 }
 
 const TokenSchema = z.object({
