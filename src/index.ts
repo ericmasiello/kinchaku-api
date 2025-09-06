@@ -21,9 +21,18 @@ app.use(
 app.use(express.json());
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Rate limit just auth endpoints
+// Rate limit auth endpoints
 const authLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 100 });
 app.use('/api/v1/auth', authLimiter);
+
+// Rate limit article creation
+const articleCreateLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 50 });
+app.use('/api/v1/articles', (req, res, next) => {
+  if (req.method === 'POST') {
+    return articleCreateLimiter(req, res, next);
+  }
+  next();
+});
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
