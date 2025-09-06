@@ -31,6 +31,7 @@ app.use('/api/v1/articles', articleRoutes);
 
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/status', (_req, res) => res.json({ ok: true }));
 
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
