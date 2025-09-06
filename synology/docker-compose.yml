@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  api:
+    image: ghcr.io/ericmasiello/kinchaku-api/kinchaku-api:b12a11f # <- pin a version tag
+    ports: ['3000:3000']
+    environment:
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - DATABASE_PATH=/data/db.sqlite
+      - NODE_ENV=production
+    restart: unless-stopped
