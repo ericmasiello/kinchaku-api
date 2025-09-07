@@ -15,9 +15,43 @@ app.set('trust proxy', 1);
 
 // Security + essentials
 app.use(helmet());
-app.use(
-  cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN, credentials: false })
-);
+
+// CORS configuration for web and native applications
+const corsOptions = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    // Allow requests with no origin (native apps, mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // If CORS_ORIGIN is '*', allow all origins
+    if (CORS_ORIGIN === '*') {
+      return callback(null, true);
+    }
+
+    // Check if the origin matches the configured CORS_ORIGIN
+    if (origin === CORS_ORIGIN) {
+      return callback(null, true);
+    }
+
+    // If CORS_ORIGIN contains multiple origins (comma-separated)
+    const allowedOrigins = CORS_ORIGIN.split(',').map((o) => o.trim());
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Reject the request
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // Allow credentials (for auth headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 
