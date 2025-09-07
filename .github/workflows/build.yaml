@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
     tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
 
 jobs:
   docker:
@@ -27,6 +29,8 @@ jobs:
           echo "sha=${SHA_TAG}" >> $GITHUB_OUTPUT
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             echo "ver=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "ver=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
           else
             echo "ver=main" >> $GITHUB_OUTPUT
           fi
