@@ -12,4 +12,6 @@ services:
       - NODE_ENV=production
       - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
       - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
+      - JWT_TOKEN_EXPIRY=${JWT_TOKEN_EXPIRY:-1h}
+      - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY:-7d}
     restart: unless-stopped

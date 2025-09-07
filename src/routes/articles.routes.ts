@@ -25,20 +25,29 @@ const updateSchema = z
 router.use(requireAuth);
 
 // List with optional filters
+const ListQuerySchema = z.object({
+  archived: z.enum(['true', 'false']).optional(),
+  favorited: z.enum(['true', 'false']).optional(),
+});
+
 router.get('/', async (req: RequestWithData, res) => {
   const userId = req.userId!;
-  const { archived, favorited } = req.query;
+  const parsed = ListQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { archived, favorited } = parsed.data;
 
   const clauses: string[] = ['user_id = ?'];
   const params: unknown[] = [userId];
 
   if (archived !== undefined) {
     clauses.push('archived = ?');
-    params.push(String(archived) === 'true' ? 1 : 0);
+    params.push(archived === 'true' ? 1 : 0);
   }
   if (favorited !== undefined) {
     clauses.push('favorited = ?');
-    params.push(String(favorited) === 'true' ? 1 : 0);
+    params.push(favorited === 'true' ? 1 : 0);
   }
 
   // @ts-ignore -- FIXME
