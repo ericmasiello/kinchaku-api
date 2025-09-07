@@ -8,6 +8,8 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('development'),
   TURSO_DATABASE_URL: z.string().default('libsql://fixme'),
   TURSO_AUTH_TOKEN: z.string().default('fixme'),
+  JWT_TOKEN_EXPIRY: z.string().default('1h'),
+  REFRESH_TOKEN_EXPIRY: z.string().default('7d'),
 });
 
 const env = EnvSchema.parse(process.env);
@@ -30,3 +32,5 @@ export const CORS_ORIGIN = env.CORS_ORIGIN;
 export const NODE_ENV = env.NODE_ENV;
 export const TURSO_DATABASE_URL = env.TURSO_DATABASE_URL;
 export const TURSO_AUTH_TOKEN = env.TURSO_AUTH_TOKEN;
+export const JWT_TOKEN_EXPIRY = env.JWT_TOKEN_EXPIRY;
+export const REFRESH_TOKEN_EXPIRY = env.REFRESH_TOKEN_EXPIRY;

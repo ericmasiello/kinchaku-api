@@ -1,11 +1,13 @@
 import { randomBytes, scrypt as _scrypt, timingSafeEqual } from 'crypto';
-import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from './config.ts';
+import jwt, { type SignOptions } from 'jsonwebtoken';
+import {
+  JWT_SECRET,
+  JWT_TOKEN_EXPIRY,
+  REFRESH_TOKEN_EXPIRY,
+} from './config.ts';
 
 // Refresh token config
 export const REFRESH_TOKEN_SECRET = JWT_SECRET + '_refresh';
-export const REFRESH_TOKEN_EXPIRY = '7d';
-const JWT_TOKEN_EXPIRY = '1h';
 import type { Response, NextFunction } from 'express';
 import type { JwtPayload, RequestWithData } from './types.ts';
 import { z } from 'zod';
@@ -36,13 +38,15 @@ export async function verifyPassword(
 
 // Consider implementing a token blacklist for logout and password change events.
 export function signAccessToken(payload: JwtPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_TOKEN_EXPIRY });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_TOKEN_EXPIRY,
+  } as SignOptions);
 }
 
 export function signRefreshToken(payload: JwtPayload) {
   return jwt.sign(payload, REFRESH_TOKEN_SECRET, {
     expiresIn: REFRESH_TOKEN_EXPIRY,
-  });
+  } as SignOptions);
 }
 
 export function verifyRefreshToken(token: string) {

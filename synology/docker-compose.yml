@@ -9,4 +9,6 @@ services:
       - CORS_ORIGIN=${CORS_ORIGIN}
       - DATABASE_PATH=/data/db.sqlite
       - NODE_ENV=production
+      - JWT_TOKEN_EXPIRY=${JWT_TOKEN_EXPIRY:-1h}
+      - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY:-7d}
     restart: unless-stopped
