@@ -5,6 +5,7 @@ import { JWT_SECRET } from './config.ts';
 // Refresh token config
 export const REFRESH_TOKEN_SECRET = JWT_SECRET + '_refresh';
 export const REFRESH_TOKEN_EXPIRY = '7d';
+const JWT_TOKEN_EXPIRY = '1h';
 import type { Response, NextFunction } from 'express';
 import type { JwtPayload, RequestWithData } from './types.ts';
 import { z } from 'zod';
