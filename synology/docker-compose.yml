@@ -5,10 +5,13 @@ services:
     ports: ['3000:3000']
     environment:
       - PORT=3000
+      # This value must be at least 32 characters long for the JWT to be secure
       - JWT_SECRET=${JWT_SECRET}
+      # Cannot set this value to * in production
       - CORS_ORIGIN=${CORS_ORIGIN}
-      - DATABASE_PATH=/data/db.sqlite
       - NODE_ENV=production
       - JWT_TOKEN_EXPIRY=${JWT_TOKEN_EXPIRY:-1h}
       - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY:-7d}
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}q
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
     restart: unless-stopped
