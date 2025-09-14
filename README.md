@@ -53,3 +53,11 @@ To exit, run:
 ```sh
 exit
 ```
+
+## Modifying Turso Database
+
+```
+turso auth login
+
+turso db shell kinchaku
+```
