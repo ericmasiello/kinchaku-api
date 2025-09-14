@@ -3,43 +3,67 @@ import { z } from 'zod';
 import db from '../db.ts';
 import { requireAuth } from '../auth.ts';
 import { type RequestWithData } from '../types.ts';
+import { type InArgs } from '@libsql/client';
 
 const router = Router();
 
-const createSchema = z.object({
-  url: z.string().url(),
-  archived: z.boolean().optional().default(false),
-  favorited: z.boolean().optional().default(false),
-});
-
-const updateSchema = z
-  .object({
-    url: z.string().url().optional(),
-    archived: z.boolean().optional(),
-    favorited: z.boolean().optional(),
-  })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: 'No fields to update',
-  });
-
 router.use(requireAuth);
 
+const CreateRequestSchema = z.object({
+  body: z.object({
+    url: z.string().url(),
+    archived: z.boolean().optional().default(false),
+    favorited: z.boolean().optional().default(false),
+  }),
+  userId: z.number(),
+});
+
+const UpdateRequestSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  body: z
+    .object({
+      url: z.string().url().optional(),
+      archived: z.boolean().optional(),
+      favorited: z.boolean().optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: 'No fields to update',
+    }),
+  userId: z.number(),
+});
+
+const DeleteRequestSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  userId: z.number(),
+});
+
 // List with optional filters
-const ListQuerySchema = z.object({
-  archived: z.enum(['true', 'false']).optional(),
-  favorited: z.enum(['true', 'false']).optional(),
+const ListSchema = z.object({
+  query: z.object({
+    archived: z.enum(['true', 'false']).optional(),
+    favorited: z.enum(['true', 'false']).optional(),
+    deleted: z.enum(['true', 'false']).optional(),
+  }),
+  userId: z.number(),
+});
+
+const GetSingleSchema = z.object({
+  params: z.object({ id: z.string() }),
+  userId: z.number(),
 });
 
 router.get('/', async (req: RequestWithData, res) => {
-  const userId = req.userId!;
-  const parsed = ListQuerySchema.safeParse(req.query);
+  const parsed = ListSchema.safeParse({
+    query: req.query,
+    userId: req.userId,
+  });
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { archived, favorited } = parsed.data;
+  const { archived, favorited, deleted } = parsed.data.query;
 
   const clauses: string[] = ['user_id = ?'];
-  const params: unknown[] = [userId];
+  const params: InArgs = [parsed.data.userId];
 
   if (archived !== undefined) {
     clauses.push('archived = ?');
@@ -50,7 +74,10 @@ router.get('/', async (req: RequestWithData, res) => {
     params.push(favorited === 'true' ? 1 : 0);
   }
 
-  // @ts-ignore -- FIXME
+  // always filter out deleted items unless explicitly requested
+  clauses.push('deleted = ?');
+  params.push(deleted === 'true' ? 1 : 0);
+
   const results = await db.execute({
     sql: `SELECT id, url, archived, favorited, date_added, updated_at
      FROM articles
@@ -66,12 +93,16 @@ router.get('/', async (req: RequestWithData, res) => {
 
 // Create
 router.post('/', async (req: RequestWithData, res) => {
-  const parsed = createSchema.safeParse(req.body);
+  const parsed = CreateRequestSchema.safeParse({
+    body: req.body,
+    userId: req.userId,
+  });
+
   if (!parsed.success)
     return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { url, archived, favorited } = parsed.data;
-  const userId = req.userId!;
+  const { url, archived, favorited } = parsed.data.body;
+  const userId = parsed.data.userId;
 
   const info = await db.execute({
     sql: `INSERT INTO articles (user_id, url, archived, favorited)
@@ -90,15 +121,27 @@ router.post('/', async (req: RequestWithData, res) => {
 
 // Read one
 router.get('/:id', async (req: RequestWithData<Record<'id', string>>, res) => {
+  const parsed = GetSingleSchema.safeParse({
+    params: req.params,
+    userId: req.userId,
+  });
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
   const results = await db.execute({
     sql: `SELECT id, url, archived, favorited, date_added, updated_at
      FROM articles WHERE id = ? AND user_id = ?`,
-    args: [req.params.id, req.userId!],
+    args: [parsed.data.params.id, parsed.data.userId],
   });
 
   const result = results.rows.at(0);
 
-  if (!result) return res.status(404).json({ error: 'Not found' });
+  if (!result) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
   res.json(result);
 });
 
@@ -106,14 +149,21 @@ router.get('/:id', async (req: RequestWithData<Record<'id', string>>, res) => {
 router.patch(
   '/:id',
   async (req: RequestWithData<Record<'id', string>>, res) => {
-    const parsed = updateSchema.safeParse(req.body);
-    if (!parsed.success)
+    const parsed = UpdateRequestSchema.safeParse({
+      params: req.params,
+      body: req.body,
+      userId: req.userId,
+    });
+
+    if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
-    const updates = parsed.data;
+    }
+
+    const updates = parsed.data.body;
 
     // Build dynamic SQL
     const sets: string[] = [];
-    const params: unknown[] = [];
+    const params: InArgs = [];
 
     if (updates.url !== undefined) {
       sets.push('url = ?');
@@ -128,12 +178,12 @@ router.patch(
       params.push(updates.favorited ? 1 : 0);
     }
 
-    if (!sets.length)
+    if (!sets.length) {
       return res.status(400).json({ error: 'No updates provided' });
+    }
 
-    params.push(req.params.id, req.userId!);
+    params.push(parsed.data.params.id, parsed.data.userId);
 
-    // @ts-ignore -- FIXME
     const info = await db.execute({
       sql: `UPDATE articles SET ${sets.join(', ')}, updated_at = datetime('now')
      WHERE id = ? AND user_id = ?`,
@@ -143,13 +193,19 @@ router.patch(
     if (info.rowsAffected === 0)
       return res.status(404).json({ error: 'Not found' });
 
-    const row = await db.execute({
+    const results = await db.execute({
       sql: `SELECT id, url, archived, favorited, date_added, updated_at
      FROM articles WHERE id = ? AND user_id = ?`,
-      args: [req.params.id, req.userId!],
+      args: [parsed.data.params.id, parsed.data.userId],
     });
 
-    res.json(row);
+    const record = results.rows.at(0);
+
+    if (!record) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    res.json(record);
   }
 );
 
@@ -157,13 +213,25 @@ router.patch(
 router.delete(
   '/:id',
   async (req: RequestWithData<Record<'id', string>>, res) => {
-    const info = await db.execute({
-      sql: `DELETE FROM articles WHERE id = ? AND user_id = ?`,
-      args: [req.params.id, req.userId!],
+    const parsed = DeleteRequestSchema.safeParse({
+      params: req.params,
+      userId: req.userId,
     });
 
-    if (info.rowsAffected === 0)
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const results = await db.execute({
+      sql: `UPDATE articles SET deleted = ?, updated_at = datetime('now')
+     WHERE id = ? AND user_id = ?`,
+      args: [1, parsed.data.params.id, parsed.data.userId],
+    });
+
+    if (results.rowsAffected === 0) {
       return res.status(404).json({ error: 'Not found' });
+    }
+
     res.status(204).send();
   }
 );
