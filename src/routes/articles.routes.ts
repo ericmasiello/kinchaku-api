@@ -4,6 +4,10 @@ import db from '../db.ts';
 import { requireAuth } from '../auth.ts';
 import { type RequestWithData } from '../types.ts';
 import { type InArgs } from '@libsql/client';
+import {
+  SecureUpdateSchema,
+  updateArticle,
+} from '../service/articleService.ts';
 
 const router = Router();
 
@@ -15,20 +19,6 @@ const CreateRequestSchema = z.object({
     archived: z.boolean().optional().default(false),
     favorited: z.boolean().optional().default(false),
   }),
-  userId: z.number(),
-});
-
-const UpdateRequestSchema = z.object({
-  params: z.object({ id: z.string().min(1) }),
-  body: z
-    .object({
-      url: z.string().url().optional(),
-      archived: z.boolean().optional(),
-      favorited: z.boolean().optional(),
-    })
-    .refine((data) => Object.keys(data).length > 0, {
-      message: 'No fields to update',
-    }),
   userId: z.number(),
 });
 
@@ -145,6 +135,12 @@ router.get('/:id', async (req: RequestWithData<Record<'id', string>>, res) => {
   res.json(result);
 });
 
+const UpdateRequestSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  body: SecureUpdateSchema,
+  userId: z.number(),
+});
+
 // Update (partial)
 router.patch(
   '/:id',
@@ -159,53 +155,27 @@ router.patch(
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const updates = parsed.data.body;
+    try {
+      const record = await updateArticle(
+        parsed.data.params.id,
+        parsed.data.userId,
+        parsed.data.body
+      );
 
-    // Build dynamic SQL
-    const sets: string[] = [];
-    const params: InArgs = [];
+      if (!record) {
+        return res.status(404).json({ error: 'Not found' });
+      }
 
-    if (updates.url !== undefined) {
-      sets.push('url = ?');
-      params.push(updates.url);
+      res.json(record);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'No valid fields to update'
+      ) {
+        return res.status(400).json({ error: 'No valid fields to update' });
+      }
+      throw error;
     }
-    if (updates.archived !== undefined) {
-      sets.push('archived = ?');
-      params.push(updates.archived ? 1 : 0);
-    }
-    if (updates.favorited !== undefined) {
-      sets.push('favorited = ?');
-      params.push(updates.favorited ? 1 : 0);
-    }
-
-    if (!sets.length) {
-      return res.status(400).json({ error: 'No updates provided' });
-    }
-
-    params.push(parsed.data.params.id, parsed.data.userId);
-
-    const info = await db.execute({
-      sql: `UPDATE articles SET ${sets.join(', ')}, updated_at = datetime('now')
-     WHERE id = ? AND user_id = ?`,
-      args: params,
-    });
-
-    if (info.rowsAffected === 0)
-      return res.status(404).json({ error: 'Not found' });
-
-    const results = await db.execute({
-      sql: `SELECT id, url, archived, favorited, date_added, updated_at
-     FROM articles WHERE id = ? AND user_id = ?`,
-      args: [parsed.data.params.id, parsed.data.userId],
-    });
-
-    const record = results.rows.at(0);
-
-    if (!record) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-
-    res.json(record);
   }
 );
 
