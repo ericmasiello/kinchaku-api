@@ -13,7 +13,7 @@
     "start": "node src/index.ts",
     "lint": "eslint . --ext .ts",
     "test": "vitest",
-    "pre:test": "node scripts/load-testdata.ts"
+    "pretest": "node scripts/load-testdata.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.14",
