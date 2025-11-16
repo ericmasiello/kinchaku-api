@@ -61,7 +61,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          dockerfile: packages/api/Dockerfile
+          file: packages/api/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/kinchaku-api:${{ steps.meta.outputs.ver }}
