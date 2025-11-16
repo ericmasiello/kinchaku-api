@@ -32,3 +32,7 @@ Copy that git sha (`a9d593c`). Then navigate to Synology.
 9. Click Action -> Restart
 
 At this point, the app should be up and running with the latest version.
+
+Test it by visiting `https://kinchaku.synology.me/version`
+
+The `commit` in the response will match the git sha you included in the steps above.
