@@ -1,6 +1,7 @@
 # --- Build stage ---
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
 COPY packages/api/package.json packages/api/
 RUN npm ci
