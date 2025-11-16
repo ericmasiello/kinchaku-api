@@ -37,7 +37,7 @@ curl -sX GET http://localhost:3000/api/v1/articles \
 # Build For Docker
 
 ```sh
-docker compose up -d --build
+docker compose -f packages/api/docker-compose.yml up -d --build
 ```
 
 At this point, it'll run locally on port 3000.

@@ -22,11 +22,11 @@ jobs:
         run: npm ci
 
       - name: Run type checking
-        run: npm run typecheck
+        run: npm run -w packages/api typecheck
 
       # Disabled until we add an eslint config
       # - name: Run linting
-      #   run: npm run lint
+      #   run: npm run -w packages/api lint
 
   docker:
     runs-on: ubuntu-latest
@@ -61,6 +61,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          dockerfile: packages/api/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/kinchaku-api:${{ steps.meta.outputs.ver }}
