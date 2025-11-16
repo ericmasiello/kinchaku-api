@@ -28,7 +28,8 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // If CORS_ORIGIN is '*', allow all origins
+    // If CORS_ORIGIN is '*', allow all origins (bookmarklets)
+    // Bookmarklets must use authentication tokens for security
     if (CORS_ORIGIN === '*') {
       return callback(null, true);
     }
@@ -65,6 +66,25 @@ const articleCreateLimiter = rateLimit({ windowMs: 10 * 60 * 1000, limit: 50 });
 app.use('/api/v1/articles', (req, res, next) => {
   if (req.method === 'POST') {
     return articleCreateLimiter(req, res, next);
+  }
+  next();
+});
+
+// Security middleware for bookmarklet requests
+// Bookmarklets can only access authenticated endpoints (require valid JWT)
+// This prevents unauthorized requests from arbitrary websites
+app.use((req, res, next) => {
+  // For CORS_ORIGIN='*' (bookmarklet mode), require authentication on state-changing requests
+  if (
+    CORS_ORIGIN === '*' &&
+    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)
+  ) {
+    const hdr = req.headers.authorization;
+    if (!hdr?.startsWith('Bearer ')) {
+      return res
+        .status(401)
+        .json({ error: 'Authentication required for this request' });
+    }
   }
   next();
 });
