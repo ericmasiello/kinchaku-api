@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { CORS_ORIGIN, NODE_ENV, PORT } from './config.ts';
 import authRoutes from './routes/auth.routes.ts';
 import articleRoutes from './routes/articles.routes.ts';
+import { VERSION_INFO } from './version.ts';
 
 // Express
 const app = express();
@@ -72,9 +73,10 @@ app.use('/api/v1/articles', (req, res, next) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/articles', articleRoutes);
 
-// Health
+// Health & Version
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.get('/status', (_req, res) => res.json({ ok: true }));
+app.get('/version', (_req, res) => res.json(VERSION_INFO));
 
 // 404
 app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));

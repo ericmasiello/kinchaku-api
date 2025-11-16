@@ -8,3 +8,6 @@ test.db
 
 # database for running app locally
 local.db
+
+# generated version file
+packages/api/version.json

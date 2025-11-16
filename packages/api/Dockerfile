@@ -7,7 +7,9 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY packages/api/tsconfig.json packages/api/
 COPY packages/api/src ./packages/api/src
-RUN npm run -w packages/api typecheck && npm prune --production
+COPY packages/api/scripts ./packages/api/scripts
+COPY .git ./.git
+RUN npm run -w packages/api typecheck && npm run -w packages/api prebuild && npm prune --production
 
 # --- Runtime stage ---
 FROM node:24-bookworm-slim
@@ -17,6 +19,7 @@ ENV NODE_ENV=production
 RUN useradd -m appuser
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/api/src ./packages/api/src
+COPY --from=build /app/packages/api/version.json ./packages/api/version.json
 EXPOSE 3000
 USER appuser
 CMD ["node", "packages/api/src/index.ts"]
