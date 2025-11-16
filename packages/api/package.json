@@ -15,7 +15,7 @@
     "start": "node scripts/generate-version.mts && node src/index.ts",
     "lint": "eslint . --ext .ts",
     "test": "vitest",
-    "pretest": "node scripts/load-testdata.ts"
+    "pretest": "node scripts/load-testdata.mts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.14",
