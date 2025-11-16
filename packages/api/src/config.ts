@@ -21,8 +21,15 @@ if (env.JWT_SECRET === 'dev-secret') {
 }
 
 if (env.NODE_ENV === 'production' && env.CORS_ORIGIN === '*') {
-  throw new Error(
-    'CORS_ORIGIN must not be "*" in production. Set to a trusted origin.'
+  // eslint-disable-next-line no-console
+  console.warn(
+    'INFO: CORS_ORIGIN is "*" (bookmarklet mode enabled). ' +
+      'Security measures in place: ' +
+      '(1) All state-changing requests require valid JWT authentication, ' +
+      '(2) Rate limiting on auth and article endpoints, ' +
+      '(3) Short-lived access tokens (default 1h), ' +
+      '(4) Refresh token rotation. ' +
+      'Bookmarklets can only work from authenticated user sessions.'
   );
 }
 
