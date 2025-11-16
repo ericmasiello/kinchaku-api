@@ -1,0 +1,13 @@
+{
+  "name": "kinchaku-bookmarklet",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "node scripts/serve.mjs",
+    "generate": "node scripts/generate.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
