@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { CORS_ORIGIN, NODE_ENV, PORT } from './config.ts';
 import authRoutes from './routes/auth.routes.ts';
 import articleRoutes from './routes/articles.routes.ts';
@@ -10,6 +12,10 @@ import { VERSION_INFO } from './version.ts';
 
 // Express
 const app = express();
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Trust reverse proxies (Synology Reverse Proxy / Nginx)
 app.set('trust proxy', 1);
@@ -75,9 +81,13 @@ app.use('/api/v1/articles', (req, res, next) => {
 // This prevents unauthorized requests from arbitrary websites
 app.use((req, res, next) => {
   // For CORS_ORIGIN='*' (bookmarklet mode), require authentication on state-changing requests
+  // Exclude auth endpoints (login, signup, refresh) which need to be public
+  const isAuthEndpoint = req.path.startsWith('/api/v1/auth/');
+
   if (
     CORS_ORIGIN === '*' &&
-    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)
+    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) &&
+    !isAuthEndpoint
   ) {
     const hdr = req.headers.authorization;
     if (!hdr?.startsWith('Bearer ')) {
@@ -87,6 +97,21 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// Serve static auth popup files
+app.use(
+  '/auth',
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    },
+  })
+);
+app.get('/auth/popup', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'auth-popup.html'));
 });
 
 // Routes

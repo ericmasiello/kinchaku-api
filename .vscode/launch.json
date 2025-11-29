@@ -6,10 +6,11 @@
   "configurations": [
     {
       "name": "Launch Program",
-      "program": "${workspaceFolder}/src/index.ts",
+      "program": "${workspaceFolder}/packages/api/src/index.ts",
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
-      "type": "node"
+      "type": "node",
+      "envFile": "${workspaceFolder}/packages/api/.env"
     },
     {
       "type": "node",

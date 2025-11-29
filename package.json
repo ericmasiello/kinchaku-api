@@ -14,6 +14,9 @@
     "typecheck": "npm run --workspaces --if-present typecheck",
     "start": "npm run --workspaces --if-present start",
     "lint": "npm run --workspaces --if-present lint",
-    "test": "npm run --workspaces --if-present test"
+    "test": "npm run --workspaces --if-present test",
+    "bookmarklet:build": "npm run -w packages/bookmarklet build && npm run -w packages/bookmarklet generate",
+    "bookmarklet:dev": "npm run -w packages/bookmarklet dev",
+    "bookmarklet:generate": "npm run -w packages/bookmarklet generate"
   }
 }

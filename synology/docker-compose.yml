@@ -1,14 +1,13 @@
-version: '3.8'
+version: "3.8"
 services:
   api:
     image: ghcr.io/ericmasiello/kinchaku-api/kinchaku-api:b12a11f # <- pin a version tag
-    ports: ['3000:3000']
+    ports: ["3000:3000"]
     environment:
       - PORT=3000
       # This value must be at least 32 characters long for the JWT to be secure
       - JWT_SECRET=${JWT_SECRET}
-      # Cannot set this value to * in production
-      - CORS_ORIGIN=${CORS_ORIGIN}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - NODE_ENV=production
       - JWT_TOKEN_EXPIRY=${JWT_TOKEN_EXPIRY:-1h}
       - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY:-7d}
