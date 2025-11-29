@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { CORS_ORIGIN, NODE_ENV, PORT } from './config.ts';
 import authRoutes from './routes/auth.routes.ts';
 import articleRoutes from './routes/articles.routes.ts';
@@ -10,6 +12,10 @@ import { VERSION_INFO } from './version.ts';
 
 // Express
 const app = express();
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Trust reverse proxies (Synology Reverse Proxy / Nginx)
 app.set('trust proxy', 1);
@@ -91,6 +97,21 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// Serve static auth popup files
+app.use(
+  '/auth',
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    },
+  })
+);
+app.get('/auth/popup', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'auth-popup.html'));
 });
 
 // Routes

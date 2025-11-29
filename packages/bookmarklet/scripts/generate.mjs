@@ -28,6 +28,8 @@ const minified = bookmarkletCode
 // Create the bookmarklet URL (javascript: protocol)
 const bookmarkletUrl = `javascript:(function(){${minified}})();`;
 
+const DEFAULT_API_URL = 'https://kinchaku.synology.me';
+
 // Generate an HTML file with the bookmarklet code
 const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -149,12 +151,12 @@ const htmlContent = `<!DOCTYPE html>
 
     <div class="code-section">
       <div class="code-label">API Configuration</div>
-      <p>Enter your Kinchaku API URL (default: https://kinchaku.synology.me):</p>
+      <p>Enter your Kinchaku API URL (default: ${DEFAULT_API_URL}):</p>
       <input 
         type="text" 
         id="apiUrlInput" 
-        value="https://kinchaku.synology.me"
-        placeholder="https://kinchaku.synology.me"
+        value="${DEFAULT_API_URL}"
+        placeholder="${DEFAULT_API_URL}"
       />
       <p style="font-size: 12px; color: #666; margin-top: 10px;">
         The bookmarklet code below will be updated when you generate it.
@@ -206,7 +208,7 @@ const htmlContent = `<!DOCTYPE html>
     const baseBookmarklet = ${JSON.stringify(bookmarkletUrl)};
 
     function updateBookmarkletCode() {
-      const apiUrl = apiUrlInput.value.trim() || 'https://kinchaku.synology.me';
+      const apiUrl = apiUrlInput.value.trim() || '${DEFAULT_API_URL}';
       // Replace the API_BASE_URL in the code
       let code = baseBookmarklet.replace(/'https:\\/\\/kinchaku\\.synology\\.me'/g, "'" + apiUrl + "'");
       bookmarkletCodeElement.textContent = code;
