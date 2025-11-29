@@ -75,9 +75,13 @@ app.use('/api/v1/articles', (req, res, next) => {
 // This prevents unauthorized requests from arbitrary websites
 app.use((req, res, next) => {
   // For CORS_ORIGIN='*' (bookmarklet mode), require authentication on state-changing requests
+  // Exclude auth endpoints (login, signup, refresh) which need to be public
+  const isAuthEndpoint = req.path.startsWith('/api/v1/auth/');
+
   if (
     CORS_ORIGIN === '*' &&
-    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)
+    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) &&
+    !isAuthEndpoint
   ) {
     const hdr = req.headers.authorization;
     if (!hdr?.startsWith('Bearer ')) {
